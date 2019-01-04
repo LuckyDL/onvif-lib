@@ -1,4 +1,4 @@
-package de.onvif.discovery;
+package com.luckydl.onvif.discovery;
 
 import java.net.URL;
 import java.util.ArrayList;

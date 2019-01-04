@@ -1,4 +1,4 @@
-package de.onvif.discovery;
+package com.luckydl.onvif.discovery;
 
 import java.net.ConnectException;
 import java.net.URL;
@@ -8,7 +8,7 @@ import javax.xml.soap.SOAPException;
 
 import org.onvif.ver10.schema.Profile;
 
-import de.onvif.soap.OnvifDevice;
+import com.luckydl.onvif.soap.OnvifDevice;
 
 /**
  * @author th
@@ -54,6 +54,7 @@ public class OnvifPointer {
 		return new OnvifDevice(address);
 	}
 
+	@Override
 	public String toString() {
 		return "ONVIF: " + name + "@" + address;
 	}
