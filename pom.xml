@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.luckydl</groupId>
-    <artifactId>onvif-java-lib</artifactId>
+    <artifactId>onvif-lib</artifactId>
     <version>1.0.0</version>
 
     <dependencies>

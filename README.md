@@ -1,8 +1,11 @@
 # onvif-java-lib
-ONVIF (Open Network Video Interface Forum) is a community to standardize communication between IP-based security products (like cameras).
 
-I developed a Java library for the ONVIF spezification. It helps you with the basics (you don't need to learn SOAP e.g.) but you may need to learn a few basics about the ONVIF spezification. As far as I know, this is the first public Java project for the ONVIF spezification.
+此项目在[milg0/onvif-java-lib](https://github.com/milg0/onvif-java-lib)的基础上对代码进行了一下优化。
 
-The project is still in development, so if you need features or know better solutions than mine, let me know.
+## 说明
+> * 修改了获取profiles的异常处理
+> * 针对部分代码进行了优化，jdk版本最低要求java8
 
-This project is not officially supported by ONVIF! It has been created in a academic project from Hochschule Trier in Germany. 
+## TODO
+* 代码结构优化
+* 方法增加注释
