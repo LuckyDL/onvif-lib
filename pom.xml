@@ -29,7 +29,6 @@
     </dependencies>
 
     <build>
-        <finalName>onvif-lib-Main</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

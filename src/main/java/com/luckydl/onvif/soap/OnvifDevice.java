@@ -1,11 +1,9 @@
 package com.luckydl.onvif.soap;
 
-import com.luckydl.onvif.soap.devices.ImagingDevices;
-import com.luckydl.onvif.soap.devices.InitialDevices;
-import com.luckydl.onvif.soap.devices.MediaDevices;
-import com.luckydl.onvif.soap.devices.PtzDevices;
+import com.luckydl.onvif.soap.devices.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
+import org.onvif.ver10.device.wsdl.Service;
 import org.onvif.ver10.schema.Capabilities;
 
 import javax.xml.soap.SOAPException;
@@ -128,17 +126,18 @@ public class OnvifDevice {
      * @throws SOAPException    soap 解析异常
      */
     private void init() throws ConnectException, SOAPException {
-        Capabilities capabilities = getDevices().getCapabilities();
 
-        if (capabilities == null) {
-            throw new ConnectException("Capabilities not reachable.");
-        }
+        List<Service> serviceList = getDevices().getServices(false);
+        serviceList.forEach(this::setServiceUri);
 
-        String localDeviceUri = capabilities.getDevice().getXAddr();
+        String localDeviceUri = this.serverDeviceUri;
 
         if (localDeviceUri.startsWith("http://")) {
             originalIp = localDeviceUri.replace("http://", "");
             originalIp = originalIp.substring(0, originalIp.indexOf('/'));
+            if(originalIp.contains(":")) {
+                originalIp = originalIp.split((":"))[0];
+            }
         } else {
             log.error("Unknown/Not implemented local protocol!");
         }
@@ -146,23 +145,30 @@ public class OnvifDevice {
         if (!originalIp.equals(HOST_IP)) {
             isProxy = true;
         }
+    }
 
-        if (capabilities.getMedia() != null && capabilities.getMedia().getXAddr() != null) {
-            serverMediaUri = replaceLocalIpWithProxyIp(capabilities.getMedia().getXAddr());
-        }
-
-        if (capabilities.getPTZ() != null && capabilities.getPTZ().getXAddr() != null) {
-            serverPtzUri = replaceLocalIpWithProxyIp(capabilities.getPTZ().getXAddr());
-        }
-
-        if (capabilities.getImaging() != null && capabilities.getImaging().getXAddr() != null) {
-            serverImagingUri = replaceLocalIpWithProxyIp(capabilities.getImaging().getXAddr());
-        }
-
-        if (capabilities.getMedia() != null && capabilities.getEvents().getXAddr() != null) {
-            serverEventsUri = replaceLocalIpWithProxyIp(capabilities.getEvents().getXAddr());
+    private void setServiceUri(Service service) {
+        switch (service.getNamespace()) {
+            case ServiceNameSpace.DEVICE:
+                this.serverDeviceUri = service.getXAddr();
+                break;
+            case ServiceNameSpace.MEDIA:
+                this.serverMediaUri = service.getXAddr();
+                break;
+            case ServiceNameSpace.IMAGING:
+                this.serverImagingUri =service.getXAddr();
+                break;
+            case ServiceNameSpace.PTZ:
+                this.serverPtzUri = service.getXAddr();
+                break;
+            case ServiceNameSpace.EVENTS:
+                this.serverEventsUri = service.getXAddr();
+                break;
+            default:
+                log.error("Unsupported service, namespace: {}, xAddr: {}", service.getNamespace(), service.getXAddr());
         }
     }
+
 
     public String replaceLocalIpWithProxyIp(String original) {
         if (original.startsWith("http:///")) {
