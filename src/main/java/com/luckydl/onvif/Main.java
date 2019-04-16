@@ -18,7 +18,7 @@ public class Main {
 
 	private static final String INFO = "Commands:\n  \n  url: Get snapshort URL.\n  info: Get information about each valid command.\n  profiles: Get all profiles.\n  exit: Exit this application.";
 
-	public static void main(String args[]) {
+	public static void main(String[] args) {
 		InputStreamReader inputStream = new InputStreamReader(System.in);
 		BufferedReader keyboardInput = new BufferedReader(inputStream);
 		String input, cameraAddress, user, password;
