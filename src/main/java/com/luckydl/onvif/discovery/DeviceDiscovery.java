@@ -26,6 +26,22 @@ public class DeviceDiscovery {
         return discoverWsDevicesAsUrls("", "", useIpv4);
     }
 
+    public static String getDeviceUrlForIpv4(String ip) {
+        Collection<URL> urls = DeviceDiscovery.discoverWsDevicesAsUrls(
+                "^http$", ".*onvif.*", true, ip);
+        String serverUrl;
+        String pattern = "(2(5[0-5]{1}|[0-4]\\d{1})|[0-1]?\\d{1,2})(\\.(2(5[0-5]{1}|[0-4]\\d{1})|[0-1]?\\d{1,2})){3}";
+        if (urls != null && urls.size() > 0) {
+            for(URL url : urls) {
+                if (url.getHost().matches(pattern)) {
+                    serverUrl = url.toString();
+                    return serverUrl;
+                }
+            }
+        }
+        return null;
+    }
+
     public static Collection<URL> discoverWsDevicesAsUrls(String regexpProtocol, String regexpPath, boolean useIpv4,
                                                           String... targetAddresses) {
         String uuid = UUID.randomUUID().toString();

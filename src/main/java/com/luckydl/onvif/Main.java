@@ -23,45 +23,10 @@ public class Main {
     private static final String INFO = "Commands:\n  \n  url: Get snapshort URL.\n  info: Get information about each valid command.\n  profiles: Get all profiles.\n  exit: Exit this application.";
 
     public static void main(String[] args) throws IOException {
-        System.out.println("What do you want to do?\n1: discovery\n2: Get Url");
         InputStreamReader inputStream = new InputStreamReader(System.in);
         BufferedReader keyboardInput = new BufferedReader(inputStream);
-        String input = keyboardInput.readLine();
-        switch (input) {
-            case "1":
-                discoveryDevice();
-                break;
-            case "2":
-                getUrlByIP();
-                break;
-            default:
-                break;
-        }
-    }
 
-    private static void discoveryDevice() throws IOException {
-        while (true) {
-            System.out.println("Enter an IP address or 'q' to quit:");
-            InputStreamReader inputStream = new InputStreamReader(System.in);
-            BufferedReader keyboardInput = new BufferedReader(inputStream);
-            String input = keyboardInput.readLine();
-            if("q".equals(input)) {
-                System.out.println("Bye Bye !!!");
-                break;
-            }
-            Collection<URL> urls = DeviceDiscovery.discoverWsDevicesAsUrls(
-                    "^http$", ".*onvif.*", true, input);
-            if (urls != null) {
-                urls.forEach(url -> System.out.println(url.toString()));
-            }
-        }
-    }
-
-    private static void getUrlByIP() {
-        InputStreamReader inputStream = new InputStreamReader(System.in);
-        BufferedReader keyboardInput = new BufferedReader(inputStream);
-        String input, cameraAddress, user, password;
-
+        String cameraAddress, user, password;
         try {
             System.out.println("Please enter camera IP (with port if not 80):");
             cameraAddress = keyboardInput.readLine();
@@ -73,9 +38,42 @@ public class Main {
             e1.printStackTrace();
             return;
         }
-
         String ip = cameraAddress.contains(":") ? cameraAddress.split(":")[0] : cameraAddress;
         Integer port = Integer.valueOf(cameraAddress.contains(":") ? cameraAddress.split(":")[1] : "80");
+
+        System.out.println("What do you want to do?\n1: discovery\n2: Get Url");
+        String input = keyboardInput.readLine();
+
+        switch (input) {
+            case "1":
+                discoveryDevice(ip, user, password);
+                break;
+            case "2":
+                getUrlByIP(ip, port, user, password);
+                break;
+            default:
+                break;
+        }
+    }
+
+    private static void discoveryDevice(String ip, String user, String password) throws IOException {
+        String serverUrl = DeviceDiscovery.getDeviceUrlForIpv4(ip);
+        if (serverUrl == null || "".equals(serverUrl)) {
+            System.out.println("Failed to get device url");
+            return;
+        }
+        OnvifDevice cam;
+        try {
+            cam = new OnvifDevice(serverUrl, user, password);
+        } catch (ConnectException | SOAPException e1) {
+            e1.printStackTrace();
+            return;
+        }
+        getDeviceInfo(cam);
+    }
+
+
+    private static void getUrlByIP(String ip, Integer port, String user, String password) {
         System.out.println("Connect to camera, please wait ...");
         OnvifDevice cam;
         try {
@@ -85,7 +83,13 @@ public class Main {
             return;
         }
         System.out.println("Connection to camera successful!");
+        getDeviceInfo(cam);
+    }
 
+    private static void getDeviceInfo( OnvifDevice cam) {
+        InputStreamReader inputStream = new InputStreamReader(System.in);
+        BufferedReader keyboardInput = new BufferedReader(inputStream);
+        String input;
         while (true) {
             try {
                 System.out.println();
@@ -97,7 +101,8 @@ public class Main {
                         List<Profile> profiles = cam.getDevices().getProfiles();
                         for (Profile p : profiles) {
                             try {
-                                System.out.println("URL from Profile \'" + p.getName() + "\': " + cam.getMedia().getSnapshotUri(p.getToken()));
+                                cam.getMedia().getRTSPStreamUri(p.getToken());
+                                System.out.println("URL from Profile \'" + p.getName() + "\': " + cam.getMedia().getRTSPStreamUri(p.getToken()));
                             } catch (SOAPException e) {
                                 System.err.println("Cannot grap snapshot URL, got Exception " + e.getMessage());
                             }

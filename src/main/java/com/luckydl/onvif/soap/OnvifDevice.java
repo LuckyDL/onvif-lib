@@ -4,7 +4,6 @@ import com.luckydl.onvif.soap.devices.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.onvif.ver10.device.wsdl.Service;
-import org.onvif.ver10.schema.Capabilities;
 
 import javax.xml.soap.SOAPException;
 import java.io.IOException;
@@ -16,6 +15,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+
 
 /**
  * @author https://github.com/milg0/onvif-java-lib
@@ -62,21 +62,18 @@ public class OnvifDevice {
             throw new ConnectException("Host not available: " + hostIp + ":" + port);
         }
         if (port == null || port.equals(0)) {
-            this.serverDeviceUri = "http://" + HOST_IP + "/onvif/device_service";
+            this.serverDeviceUri = "http://" + hostIp + "/onvif/device_service";
         } else {
-            this.serverDeviceUri = "http://" + HOST_IP + ":" + port.toString() + "/onvif/device_service";
+            this.serverDeviceUri = "http://" + hostIp + ":" + port.toString() + "/onvif/device_service";
         }
+        init(serverDeviceUri, user, password);
 
-        this.username = user;
-        this.password = password;
+    }
 
-        this.soap = new SOAP(this);
-        this.initialDevices = new InitialDevices(this);
-        this.ptzDevices = new PtzDevices(this);
-        this.mediaDevices = new MediaDevices(this);
-        this.imagingDevices = new ImagingDevices(this);
-
-        init();
+    public OnvifDevice(String serverDeviceUri, String username, String password ) throws ConnectException, SOAPException {
+        this.serverDeviceUri = serverDeviceUri;
+        this.HOST_IP = getIp(serverDeviceUri);
+        init(serverDeviceUri, username, password);
     }
 
     /**
@@ -125,25 +122,38 @@ public class OnvifDevice {
      *                          GetCapabilities()
      * @throws SOAPException    soap 解析异常
      */
-    private void init() throws ConnectException, SOAPException {
+    private void init(String deviceUri, String username, String password) throws ConnectException, SOAPException {
+        this.username = username;
+        this.password = password;
+        this.soap = new SOAP(this);
+        this.initialDevices = new InitialDevices(this);
+        this.ptzDevices = new PtzDevices(this);
+        this.mediaDevices = new MediaDevices(this);
+        this.imagingDevices = new ImagingDevices(this);
 
         List<Service> serviceList = getDevices().getServices(false);
         serviceList.forEach(this::setServiceUri);
 
         String localDeviceUri = this.serverDeviceUri;
 
+        originalIp = getIp(localDeviceUri);
+
+        if (originalIp != null &&!originalIp.equals(HOST_IP)) {
+            isProxy = true;
+        }
+    }
+
+    private String getIp(String localDeviceUri) {
         if (localDeviceUri.startsWith("http://")) {
-            originalIp = localDeviceUri.replace("http://", "");
-            originalIp = originalIp.substring(0, originalIp.indexOf('/'));
-            if(originalIp.contains(":")) {
-                originalIp = originalIp.split((":"))[0];
+            String ip = localDeviceUri.replace("http://", "");
+            ip = ip.substring(0, ip.indexOf('/'));
+            if(ip.contains(":")) {
+                ip = ip.split((":"))[0];
             }
+            return ip;
         } else {
             log.error("Unknown/Not implemented local protocol!");
-        }
-
-        if (!originalIp.equals(HOST_IP)) {
-            isProxy = true;
+            return null;
         }
     }
 
